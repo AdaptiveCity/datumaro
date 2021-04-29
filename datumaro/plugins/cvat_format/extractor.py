@@ -298,8 +298,12 @@ class CvatExtractor(SourceExtractor):
         for frame_id, item_desc in parsed.items():
             # Image could be of any format
             name = item_desc.get('name', 'frame_%06d.*' % int(frame_id))
-            image_pat = osp.join(self._images_dir, name)
-            image_file = next(iter(glob(image_pat)), None)
+            image_patt = osp.join(self._images_dir, name)
+            image_file = next(iter(glob(image_patt)), None)
+            if image_file is None:
+                # Simulate old behaviour: assume a PNG file
+                name = item_desc.get('name', 'frame_%06d.png' % int(frame_id))
+                image_file = osp.join(self._images_dir, name)
             image_size = (item_desc.get('height'), item_desc.get('width'))
             if all(image_size):
                 image = Image(path=image_file, size=tuple(map(int, image_size)))

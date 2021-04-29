@@ -5,6 +5,7 @@
 
 from collections import OrderedDict
 import os.path as osp
+from glob import glob
 from defusedxml import ElementTree
 
 from datumaro.components.extractor import (SourceExtractor, DatasetItem,
@@ -295,12 +296,15 @@ class CvatExtractor(SourceExtractor):
 
     def _load_items(self, parsed):
         for frame_id, item_desc in parsed.items():
-            name = item_desc.get('name', 'frame_%06d.png' % int(frame_id))
-            image = osp.join(self._images_dir, name)
+            # Image could be of any format
+            name = item_desc.get('name', 'frame_%06d.*' % int(frame_id))
+            image_pat = osp.join(self._images_dir, name)
+            image_file = next(iter(glob(image_pat)), None)
             image_size = (item_desc.get('height'), item_desc.get('width'))
             if all(image_size):
-                image = Image(path=image, size=tuple(map(int, image_size)))
-
+                image = Image(path=image_file, size=tuple(map(int, image_size)))
+            else:
+                image = Image(path=image_file)
             parsed[frame_id] = DatasetItem(id=osp.splitext(name)[0],
                 subset=self._subset, image=image,
                 annotations=item_desc.get('annotations'),
